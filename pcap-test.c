@@ -28,9 +28,9 @@ bool parse(Param* param, int argc, char* argv[]) {
 
 void print_macaddress(const u_int8_t *ether_host) {
 	for (int i = 0; i < ETHER_ADDR_LEN - 1; i++) {
-		printf("%02x:", (unsigned)ether_host[i]);
+		printf("%02x:", ether_host[i]);
 	}
-	printf("%02x\n", (unsigned)ether_host[ETHER_ADDR_LEN]);
+	printf("%02x\n", ether_host[ETHER_ADDR_LEN]);
 }
 
 void packet_capture(struct pcap_pkthdr* header, const u_char* packet) {
@@ -39,14 +39,14 @@ void packet_capture(struct pcap_pkthdr* header, const u_char* packet) {
 
 	size_t size_ip = ip->ip_hl*4;
 	if (size_ip < 20) {
-		printf("\n* Invalid IP header length: %u bytes\n", size_ip);
+		//printf("\n* Invalid IP header length: %u bytes\n", size_ip);
 		return;
 	}
 	const struct libnet_tcp_hdr  *tcp = (struct libnet_tcp_hdr*)(packet + LIBNET_ETH_H + size_ip);
 
 	size_t size_tcp = tcp->th_off*4;
 	if (size_tcp < 20) {
-		printf("\n* Invalid TCP header length: %u bytes\n", size_tcp);
+		//printf("\n* Invalid TCP header length: %u bytes\n", size_tcp);
 		return;
 	}
 	const u_char *payload = (u_char *)(packet + LIBNET_ETH_H + size_ip + size_tcp);
@@ -56,7 +56,7 @@ void packet_capture(struct pcap_pkthdr* header, const u_char* packet) {
 
 	switch(ip->ip_p) {
 		case IPPROTO_TCP:
-			printf("\n\nEthernet dst mac: ");
+			printf("\nEthernet dst mac: ");
 			print_macaddress(ethernet->ether_dhost);
 	
 			printf("Ethernet src mac: ");
