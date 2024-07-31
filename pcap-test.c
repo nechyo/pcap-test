@@ -35,56 +35,50 @@ void print_macaddress(const u_int8_t *ether_host) {
 
 void packet_capture(struct pcap_pkthdr* header, const u_char* packet) {
 	const struct libnet_ethernet_hdr *ethernet = (struct libnet_ethernet_hdr*)(packet);
+	if (ntohs(ethernet->ether_type) != ETHERTYPE_IP) return;
+
 	const struct libnet_ipv4_hdr *ip = (struct libnet_ipv4_hdr*)(packet + LIBNET_ETH_H);
+	if (ip->ip_p != IPPROTO_TCP) return;
 
 	size_t size_ip = ip->ip_hl*4;
 	if (size_ip < 20) {
 		//printf("\n* Invalid IP header length: %u bytes\n", size_ip);
 		return;
 	}
-	const struct libnet_tcp_hdr  *tcp = (struct libnet_tcp_hdr*)(packet + LIBNET_ETH_H + size_ip);
 
+	const struct libnet_tcp_hdr *tcp = (struct libnet_tcp_hdr*)(packet + LIBNET_ETH_H + size_ip);
 	size_t size_tcp = tcp->th_off*4;
 	if (size_tcp < 20) {
 		//printf("\n* Invalid TCP header length: %u bytes\n", size_tcp);
 		return;
 	}
-	const u_char *payload = (u_char *)(packet + LIBNET_ETH_H + size_ip + size_tcp);
 
+	const u_char *payload = (u_char *)(packet + LIBNET_ETH_H + size_ip + size_tcp);
 	size_t size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
 	if (size_payload == 0) return;
 
-	switch(ip->ip_p) {
-		case IPPROTO_TCP:
-			printf("\nEthernet dst mac: ");
-			print_macaddress(ethernet->ether_dhost);
-	
-			printf("Ethernet src mac: ");
-			print_macaddress(ethernet->ether_shost);
-		
+	printf("Ethernet dst mac: ");
+	print_macaddress(ethernet->ether_dhost);
+	printf("Ethernet src mac: ");
+	print_macaddress(ethernet->ether_shost);
 
-			printf("  src ip: %s\n", inet_ntoa(ip->ip_src));
-			printf("  dst ip: %s\n", inet_ntoa(ip->ip_dst));
+	printf("  src ip: %s\n", inet_ntoa(ip->ip_src));
+	printf("  dst ip: %s\n", inet_ntoa(ip->ip_dst));
+	printf("  src port: %d\n", ntohs(tcp->th_sport));
+	printf("  dst port: %d\n", ntohs(tcp->th_dport));
 
-			printf("  src port: %d\n", ntohs(tcp->th_sport));
-			printf("  dst port: %d\n", ntohs(tcp->th_dport));
+	const u_char *ch = payload;
+	printf("  Payload: ");
 
-
-			const u_char *ch = payload;
-			printf("  Payload: ");
-
-			for (size_t i = 0; i < size_payload; i++) {
-				printf("0x%02x ", *ch);
-				ch++;
-				if (i == 19 || size_payload == i) {
-					printf("\n");
-					break;
-				}
-			}
+	for (size_t i = 0; i < size_payload; i++) {
+		printf("0x%02x ", *ch);
+		ch++;
+		if (i == 19) {
+			printf("\n");
 			break;
-		default:
-			return;
+		}
 	}
+
 	return;
 }
 
