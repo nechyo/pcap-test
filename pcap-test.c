@@ -41,19 +41,13 @@ void packet_capture(struct pcap_pkthdr* header, const u_char* packet) {
 	if (ip->ip_p != IPPROTO_TCP) return;
 
 	size_t size_ip = ip->ip_hl*4;
-	if (size_ip < 20) {
-		//printf("\n* Invalid IP header length: %u bytes\n", size_ip);
-		return;
-	}
+	if (size_ip < 20) return;
 
 	const struct libnet_tcp_hdr *tcp = (struct libnet_tcp_hdr*)(packet + LIBNET_ETH_H + size_ip);
 	size_t size_tcp = tcp->th_off*4;
-	if (size_tcp < 20) {
-		//printf("\n* Invalid TCP header length: %u bytes\n", size_tcp);
-		return;
-	}
+	if (size_tcp < 20) return;
 
-	const u_char *payload = (u_char *)(packet + LIBNET_ETH_H + size_ip + size_tcp);
+	const u_char *payload = (u_char*)(packet + LIBNET_ETH_H + size_ip + size_tcp);
 	size_t size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
 	if (size_payload == 0) return;
 
